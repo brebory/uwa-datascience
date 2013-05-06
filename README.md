@@ -1,5 +1,4 @@
 datasci_course_materials
 ========================
 
-Public repository for course materials for the Spring 2013 session of Introduction to Data Science, an online coursera course.
-
+My work for the Summer 2013 University of Washington Data Science Coursera class.
