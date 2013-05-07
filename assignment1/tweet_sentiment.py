@@ -1,7 +1,34 @@
 import sys
+import json
 
 def hw():
-    print 'Hello, world!'
+    affin = open("AFINN-111.txt", "r")
+    scores = {}
+    tweets = []
+    index = 0
+    for line in affin:
+        term, score = line.split("\t")
+        scores[term] = int(score)
+        tweetfile = open("output.txt", "r")
+        for line in tweetfile:
+            tweets.append(line) 
+    for tweet in tweets:
+        index += 1
+        tweetscore = 0.0
+        try:
+            text = json.loads(tweet)["text"]
+        except KeyError:
+            continue 
+        else:
+            words = text.split(" ")
+            for word in words:
+                try:
+                    tweetscore += float(scores[word.lower()])
+                    
+                except KeyError:
+                    continue
+            print("%f" % tweetscore)
+
 
 def lines(fp):
     print str(len(fp.readlines()))
