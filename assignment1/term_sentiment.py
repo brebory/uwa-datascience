@@ -1,51 +1,41 @@
 import sys
 import json
 import math
+import re
 
-def hw():
-    affin = open("AFINN-111.txt", "r")
-    sentiments, tweets = load_tweets(affin, "output.txt")
+def hw(sent_file, tweet_file):
+    sentiments, tweets = load_tweets(sent_file, tweet_file)
     for tweet in tweets:
         try:
             text = json.loads(tweet)["text"]
         except KeyError:
             continue 
         else:
-            tweet_sentiment = construct_initial_sentiments(text.split(" "), sentiments)
-            avg_sent = round_average(average_sentiment(tweet_sentiment))
-            result = reassign_words(tweet_sentiment, avg_sent)
+            tweet_sentiments = construct_initial_sentiments(text.split(), sentiments)
+            avg_sent = round_average(average_sentiment(tweet_sentiments))
+            result = reassign_words(tweet_sentiments, avg_sent)
             print_result(result)
 
-def load_tweets(affin, filename):
-    result = []
+def load_tweets(sent_file, tweet_file):
+    tweets = []
     sentiments = {}
-    for line in affin:
+    for line in sent_file:
         term, score = line.split("\t")
         sentiments[term] = float(score)
-        tweetfile = open(filename, "r")
-        for line in tweetfile:
-            result.append(line)
-    return [sentiments, result]
+    for line in tweet_file:
+        tweets.append(line)
+    return [sentiments, tweets]
 
-def round_average(value):
-    if(value > 0.0):
-        return math.ceil(value)
-    else:
-        return math.floor(value)
-
-def print_result(result):
-    for word in result:
-        print("%s %f" % (word, result[word]))
-
-def construct_initial_sentiments(wordlist, sentiments):
-    sentiment_dict = {}
-    for word in wordlist:
+def construct_initial_sentiments(tweet_text, sentiments):
+    tweet_sentiments = {}
+    for word in tweet_text:
+        if re.search(r'[^a-zA-Z]', word):
+            continue
         try:
-            sentiment_dict[word] = float(sentiments[word.lower()])
+            tweet_sentiments[word] = float(sentiments[word.lower()])
         except KeyError:
-            sentiment_dict[word] = 0.0
-    return sentiment_dict
-
+            tweet_sentiments[word] = 0.0
+    return tweet_sentiments
 
 def average_sentiment(words_sentiment):
     total_score = 0.0
@@ -59,21 +49,26 @@ def average_sentiment(words_sentiment):
     except ZeroDivisionError:
         return 0.0
 
+def round_average(value):
+    if(value > 0.0):
+        return math.ceil(value)
+    else:
+        return math.floor(value)
+
 def reassign_words(wordlist, value):
     for word in wordlist:
         if(wordlist[word] == 0.0):
             wordlist[word] = value
     return wordlist
 
-def lines(fp):
-    print str(len(fp.readlines()))
+def print_result(result):
+    for word in result:
+        print("%s %f" % (word, result[word]))
 
 def main():
     sent_file = open(sys.argv[1])
     tweet_file = open(sys.argv[2])
-    hw()
-    lines(sent_file)
-    lines(tweet_file)
+    hw(sent_file, tweet_file)
 
 if __name__ == '__main__':
     main()
