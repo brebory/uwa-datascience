@@ -1,31 +1,52 @@
 import sys
 import json
+import math
 import re
 
-def hw(filename):
-    tweetfile = open(filename, "r")
-    tags = {}
-    for line in tweetfile:
-        try:
-            hashtags = json.loads(line)["entities"]["hashtags"]
-        except KeyError:
-            print "Didn't have a entities or hashtags entry"
-            continue
-        else:
-            for tag in hashtags:
-                try:
-                    tags[tag[u'text']] += 1.0
-                except KeyError:
-                    tags[tag[u'text']] = 1.0
-    # Need to implement lambda in sorted(list, cmp <= lambda) here, must research
-    for tag in tags:
-        print("%s %f" % (tag, tags[tag]))
+def hw(sent_file, tweet_file):
+    sentiments, tweets = process_files(sent_file, tweet_file)
+    hashtags = process_tags(tweets).items()
+    hashtags.sort(key=extract_key, reverse=True)
+    for i in range(10):
+        print "%s %f".encode("utf-8") % (hashtags[i][0], float(hashtags[i][1]))
 
-def lines(fp):
-    print str(len(fp.readlines()))
+def extract_key(coll):
+    return coll[1]
+
+
+def process_files(sent_file, tweet_file):
+    tweets = []
+    sentiments = {}
+    for line in sent_file:
+        term, score = line.split("\t")
+        sentiments[term] = float(score)
+    for line in tweet_file:
+        tweets.append(line)
+    return [sentiments, tweets]
+
+def process_tags(tweets):
+    result = {}
+    for tweet in tweets:
+        hashtags = process_tweet_hashtags(tweet)
+        if hashtags:
+            for tag in hashtags:
+                text = tag["text"]
+                if text in result:
+                    result[text] += 1
+                else:
+                    result[text] = 1
+    return result
+
+def process_tweet_hashtags(tweet):
+    try:
+        return json.loads(tweet)["entities"]["hashtags"]
+    except KeyError:
+        return None
 
 def main():
-    hw(sys.argv[1])
+    sent_file = open(sys.argv[1])
+    tweet_file = open(sys.argv[2])
+    hw(sent_file, tweet_file)
 
 if __name__ == '__main__':
     main()

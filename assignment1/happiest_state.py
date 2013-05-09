@@ -6,9 +6,14 @@ import re
 def hw(sent_file, tweet_file):
     sentiments, tweets = process_files(sent_file, tweet_file)
     scored_tweets = tweet_sentiments(sentiments, tweets)
-    estimated_sentiments = compute_estimated_sentiments(scored_tweets)
-    for key, val in estimated_sentiments.items():
-        print "%s %f".encode("utf-8") % (key, float(val["avg"]))
+    state_scores = get_state_scores(scored_tweets).items()
+    state_scores.sort(key=extract_key, reverse=True)
+    print "%s" % state_scores[0][0]
+
+def extract_key(coll):
+    return coll[1]
+
+    
 
 def process_files(sent_file, tweet_file):
     tweets = []
@@ -20,25 +25,93 @@ def process_files(sent_file, tweet_file):
         tweets.append(line)
     return [sentiments, tweets]
 
+def get_state_scores(scored_tweets):
+    result = state_dict()
+    for tweet in scored_tweets:
+        values = scored_tweets[tweet]
+        if values["location"] in result:
+            result[values["location"]] += values["sentiment"]
+    return result
+
+
+def state_dict():
+    state_str = """Alabama  AL
+Alaska  AK
+Arizona AZ
+Arkansas    AR
+California  CA
+Colorado    CO
+Connecticut CT
+Delaware    DE
+Florida FL
+Georgia GA
+Hawaii  HI
+Idaho   ID
+Illinois    IL
+Indiana IN
+Iowa    IA
+Kansas  KS
+Kentucky    KY
+Louisiana   LA
+Maine   ME
+Maryland    MD
+Massachusetts   MA
+Michigan    MI
+Minnesota   MN
+Mississippi MS
+Missouri    MO
+Montana MT
+Nebraska    NE
+Nevada  NV
+New Hampshire   NH
+New Jersey  NJ
+New Mexico  NM
+New York    NY
+North Carolina  NC
+North Dakota    ND
+Ohio    OH
+Oklahoma    OK
+Oregon  OR
+Pennsylvania    PA
+Rhode Island    RI
+South Carolina  SC
+South Dakota    SD
+Tennessee   TN
+Texas   TX
+Utah    UT
+Vermont VT
+Virginia    VA
+Washington  WA
+West Virginia   WV
+Wisconsin   WI
+Wyoming WY
+"""
+    result = {}
+    matches = re.findall(r"\w+\s+(\w\w)\n", state_str)
+    for match in matches:
+        result[match] = 0
+    return result
+
+
+
 def tweet_sentiments(sentiments, tweets):
     result = {}
     for tweet in tweets:
-        text = process_tweet(tweet)
+        text = process_tweet_text(tweet)
+        location = process_tweet_location(tweet)
         if text:
-            #phrases = extract_words_and_phrases(text.split())
-            phrases = text.split()
+            phrases = extract_words_and_phrases(text.split())
             tweet_sentiment = 0.0
             for phrase in phrases:
                 tweet_sentiment += word_sentiment(sentiments, phrase)
-            result[text] = tweet_sentiment
+            result[text] = {"sentiment": tweet_sentiment, "location": location}
     return result
 
 def compute_estimated_sentiments(scored_tweets):
     result = {}
     for tweet in scored_tweets.keys():
         score = scored_tweets[tweet]
-        # for phrase in extract_words_and_phrases(tweet.split()):
-        for phrase in tweet.split():
+        for phrase in extract_words_and_phrases(tweet.split()):
             if phrase not in result:
                 result[phrase] = {"avg": scored_tweets[tweet], "count": 1.0}
             else:
@@ -80,10 +153,17 @@ def linear_sublists(coll):
 def empty(coll):
     return bool(len(coll))
 
-def process_tweet(tweet):
+def process_tweet_text(tweet):
     try:
         return json.loads(tweet)["text"]
     except KeyError:
+        return None
+
+def process_tweet_location(tweet):
+    try:
+        location = json.loads(tweet)["user"]["location"]
+        return re.search(r"\s([A-Z][A-Z])", location).group(1)
+    except:
         return None
 
 def word_sentiment(sentiments, word):

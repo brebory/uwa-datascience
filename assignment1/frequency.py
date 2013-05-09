@@ -14,7 +14,7 @@ def hw(filename):
         else:
             num_terms += float(len(text.split()))
             for term in text.split():
-                if re.search(r'[^a-zA-Z]', term):
+                if re.search(r'[^a-zA-Z\'\,]', term):
                     continue
                 if term in tweets:
                     tweets[term] += 1.0
