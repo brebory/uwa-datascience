@@ -4,19 +4,13 @@ import math
 import re
 
 def hw(sent_file, tweet_file):
-    sentiments, tweets = load_tweets(sent_file, tweet_file)
-    for tweet in tweets:
-        try:
-            text = json.loads(tweet)["text"]
-        except KeyError:
-            continue 
-        else:
-            tweet_sentiments = construct_initial_sentiments(text.split(), sentiments)
-            avg_sent = round_average(average_sentiment(tweet_sentiments))
-            result = reassign_words(tweet_sentiments, avg_sent)
-            print_result(result)
+    sentiments, tweets = process_files(sent_file, tweet_file)
+    scored_tweets = tweet_sentiments(sentiments, tweets)
+    estimated_sentiments = compute_estimated_sentiments(scored_tweets)
+    for key, val in estimated_sentiments.items():
+        print "%s %f".encode("utf-8") % (key, float(val["avg"]))
 
-def load_tweets(sent_file, tweet_file):
+def process_files(sent_file, tweet_file):
     tweets = []
     sentiments = {}
     for line in sent_file:
@@ -26,44 +20,81 @@ def load_tweets(sent_file, tweet_file):
         tweets.append(line)
     return [sentiments, tweets]
 
-def construct_initial_sentiments(tweet_text, sentiments):
-    tweet_sentiments = {}
-    for word in tweet_text:
-        if re.search(r'[^a-zA-Z]', word):
-            continue
-        try:
-            tweet_sentiments[word] = float(sentiments[word.lower()])
-        except KeyError:
-            tweet_sentiments[word] = 0.0
-    return tweet_sentiments
+def tweet_sentiments(sentiments, tweets):
+    result = {}
+    for tweet in tweets:
+        text = process_tweet(tweet)
+        if text:
+            #phrases = extract_words_and_phrases(text.split())
+            phrases = text.split()
+            tweet_sentiment = 0.0
+            for phrase in phrases:
+                tweet_sentiment += word_sentiment(sentiments, phrase)
+            result[text] = tweet_sentiment
+    return result
 
-def average_sentiment(words_sentiment):
-    total_score = 0.0
-    number_terms = 0.0
-    for word in words_sentiment:
-        if(words_sentiment[word] != 0.0):
-            total_score += words_sentiment[word]
-            number_terms += 1.0
+def compute_estimated_sentiments(scored_tweets):
+    result = {}
+    for tweet in scored_tweets.keys():
+        score = scored_tweets[tweet]
+        # for phrase in extract_words_and_phrases(tweet.split()):
+        for phrase in tweet.split():
+            if phrase not in result:
+                result[phrase] = {"avg": scored_tweets[tweet], "count": 1.0}
+            else:
+                avg = result[phrase]["avg"]
+                count = result[phrase]["count"]
+                result[phrase] = {"avg": (avg * count + score) / (count + 1.0), "count": count + 1.0}
+    return result
+
+def extract_words_and_phrases(wordlist):
+    """
+    Given a list built from a sentence in order of occurance, builds
+    a list of all possible phrases that could be extracted from that sentence
+    including just individual words.
+    Returns the list of words and phrases
+    """
+    phrases_list = linear_sublists(wordlist)
+    result = []
+    for word_list in phrases_list:
+        result.append(stringify(word_list))
+    return result
+
+def stringify(coll):
+    """
+    Returns all members of coll concatenated into one string.
+    """
+    return " ".join(coll)    
+
+def linear_sublists(coll):
+    """
+    Given a collection, returns a list of the linear sublists
+    """
+    result = []
+    l = len(coll)
+    for i in range(l):
+        for j in range(i, l):
+            result.append(coll[i:j])
+    return result
+
+def empty(coll):
+    return bool(len(coll))
+
+def process_tweet(tweet):
     try:
-        return total_score / number_terms
-    except ZeroDivisionError:
+        return json.loads(tweet)["text"]
+    except KeyError:
+        return None
+
+def word_sentiment(sentiments, word):
+    try:
+        return float(sentiments[word])
+    except KeyError:
         return 0.0
-
-def round_average(value):
-    if(value > 0.0):
-        return math.ceil(value)
-    else:
-        return math.floor(value)
-
-def reassign_words(wordlist, value):
-    for word in wordlist:
-        if(wordlist[word] == 0.0):
-            wordlist[word] = value
-    return wordlist
 
 def print_result(result):
     for word in result:
-        print("%s %f" % (word, result[word]))
+        print("%s %f".encode("utf-8") % (word, result[word]))
 
 def main():
     sent_file = open(sys.argv[1])
