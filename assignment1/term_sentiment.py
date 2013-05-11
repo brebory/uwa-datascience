@@ -8,7 +8,7 @@ def hw(sent_file, tweet_file):
     scored_tweets = tweet_sentiments(sentiments, tweets)
     estimated_sentiments = compute_estimated_sentiments(scored_tweets)
     for key, val in estimated_sentiments.items():
-        print "%s %f".encode("utf-8") % (key, float(val["avg"]))
+        print "%s %f".encode('utf-8') % (key.encode('utf-8'), float(val["avg"]))
 
 def process_files(sent_file, tweet_file):
     tweets = []
@@ -37,7 +37,7 @@ def compute_estimated_sentiments(scored_tweets):
     result = {}
     for tweet in scored_tweets.keys():
         score = scored_tweets[tweet]
-        # for phrase in extract_words_and_phrases(tweet.split()):
+        #for phrase in extract_words_and_phrases(tweet.split()):
         for phrase in tweet.split():
             if phrase not in result:
                 result[phrase] = {"avg": scored_tweets[tweet], "count": 1.0}
@@ -73,7 +73,7 @@ def linear_sublists(coll):
     result = []
     l = len(coll)
     for i in range(l):
-        for j in range(i, l):
+        for j in range(i + 1, l):
             result.append(coll[i:j])
     return result
 

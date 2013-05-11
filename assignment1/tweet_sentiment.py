@@ -5,10 +5,16 @@ import re
 def hw(sent_file, tweet_file):
     sentiments, tweets = process_files(sent_file, tweet_file)
     scored_tweets = tweet_sentiments(sentiments, tweets)
-    for tweet in scored_tweets:
-        print("%f".encode("utf-8") % float(scored_tweets[tweet]))
+    for tweet in tweets:
+        text = process_tweet(tweet)
+        if text:
+            print("%f" % float(scored_tweets[text]))
 
 def tweet_sentiments(sentiments, tweets):
+    """
+    Creates a dictionary of tweet: sentiment pairs where
+    sentiment is the sum of sentiments of all terms in tweet
+    """
     result = {}
     for tweet in tweets:
         text = process_tweet(tweet)
@@ -17,7 +23,7 @@ def tweet_sentiments(sentiments, tweets):
             tweet_sentiment = 0.0
             for phrase in phrases:
                 tweet_sentiment += word_sentiment(sentiments, phrase)
-            result[tweet] = tweet_sentiment
+            result[text] = tweet_sentiment
     return result
 
 def extract_words_and_phrases(wordlist):
@@ -37,7 +43,7 @@ def stringify(coll):
     """
     Returns all members of coll concatenated into one string.
     """
-    return "".join(coll)
+    return " ".join(coll)
 
     
 def linear_sublists(coll):
@@ -45,17 +51,10 @@ def linear_sublists(coll):
     Given a collection, returns a list of the linear sublists
     """
     result = []
-    for i in range(len(coll)):
-        subcoll1 = coll[i:]
-        subcoll2 = coll[:i]
-        if subcoll1 not in result and len(subcoll1):
-            result.append(coll[i:])
-        if subcoll2 not in result and len(subcoll2):
-            result.append(coll[:i])
-        for j in range(i, len(coll)):
-            subcoll3 = coll[i:j]
-            if subcoll3 not in result and len(subcoll3):
-                result.append(coll[i:j])
+    l = len(coll)
+    for i in range(l):
+        for j in range(i + 1, l):
+            result.append(coll[i:j])
     return result
 
 def process_tweet(tweet):
@@ -66,7 +65,7 @@ def process_tweet(tweet):
 
 def word_sentiment(sentiments, word):
     try:
-        return float(sentiments[word])
+        return float(sentiments[word.lower()])
     except KeyError:
         return 0.0
 
