@@ -1,0 +1,11 @@
+CREATE VIEW v1 as 
+SELECT * from frequency 
+WHERE docid = "10080_txt_crude" or docid = "17035_txt_earn";
+
+CREATE VIEW VIT as 
+SELECT a.term, b.term, sum(a.count * b.count)
+FROM v1 a, v1 b
+WHERE a.term = b.term 
+GROUP BY a.term;
+
+SELECT * from (VIT);

@@ -1,0 +1,1 @@
+SELECT count(docid) FROM frequency WHERE docid IN (SELECT docid FROM frequency WHERE term = "transactions") AND term = "world"; 
