@@ -1,0 +1,1 @@
+SELECT sum(similarity) FROM (SELECT A.count * B.count AS similarity FROM frequency AS A, frequency AS B WHERE A.term = B.term AND A.docid = "10080_txt_crude" AND B.docid = "17035_txt_earn");

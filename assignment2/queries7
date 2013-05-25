@@ -1,1 +1,1 @@
-SELECT A.value * B.value FROM A JOIN B ON A.row_num = B.col_num AND A.col_num = B.row_num WHERE A.row_num = 3 AND B.row_num = 2; 
+SELECT value FROM (SELECT A.row_num AS row_num, B.col_num AS col_num, sum(A.value * B.value) AS value FROM A, B WHERE A.col_num = B.row_num GROUP BY A.row_num, B.col_num) WHERE row_num = 2 AND col_num = 3;

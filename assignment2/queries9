@@ -1,0 +1,1 @@
+SELECT docid, sum(count) AS similarity FROM  frequency WHERE term = "washington" OR term = "taxes" OR term = "treasury" GROUP BY docid ORDER BY similarity;
